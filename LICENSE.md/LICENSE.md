@@ -1,1 +1,1 @@
-no licence yet.
+no license yet.
