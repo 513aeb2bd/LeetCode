@@ -1,116 +1,116 @@
-getMaxWater: ; 01
-    ; rcx-in: heights array (left post addr)
-    ; rdx-in: number of posts
+_getMaxWater: ; 01
+        ; rcx-in: heights array (left post addr)
+        ; rdx-in: number of posts
 
-    ; rax: tmp water
-    ; rcx: heights array
-    ; rdx: tmp
-    ; rbx: shorter post height
-    ; r8: tmp L post addr
-    ; r9: tmp R post addr
-    ; r12: L post addr
-    ; r13: R post addr
+        ; rax: tmp water
+        ; rcx: heights array
+        ; rdx: tmp
+        ; rbx: shorter post height
+        ; r8: tmp L post addr
+        ; r9: tmp R post addr
+        ; r12: L post addr
+        ; r13: R post addr
 
-    ; [rsp]: max water
+        ; [rsp]: max water
 
-    PUSH rbx
-    PUSH r12
-    PUSH r13
-    SUB rsp, 8
+        PUSH rbx
+        PUSH r12
+        PUSH r13
+        SUB rsp, 8
 
-    XOR rbx, rbx
-    CMP rdx, 10000000h
-    JNC BRAN_01_heightsException ; if "number of posts" >= 2^32 then return 0
-    SUB rdx, 1
-    JBE BRAN_01_heightsException ; if "number of posts" <= 1 then return 0
-    MOV r8, rcx ; L post addr
-    LEA r9, BYTE [rdx*4 + rcx] ; R post addr
-    MOV r12, rcx ; L post addr
-    MOV r13, r9 ; R post addr
+        XOR rbx, rbx
+        CMP rdx, 10000000h
+        JNC BRAN_01_heightsException ; if "number of posts" >= 2^32 then return 0
+        SUB rdx, 1
+        JBE BRAN_01_heightsException ; if "number of posts" <= 1 then return 0
+        MOV r8, rcx ; L post addr
+        LEA r9, BYTE [rdx*4 + rcx] ; R post addr
+        MOV r12, rcx ; L post addr
+        MOV r13, r9 ; R post addr
 
-    ; get initial "max water"
+        ; get initial "max water"
 
-    MOV rax, rdx ; move initial width of posts ("number of posts" - 1)
-    MOV ebx, DWORD [r8]
-    CMP ebx, DWORD [r9]
-    JC BRAN_01_doNotExchange ; if "tmp L post height" < "tmp R post height" then "shorter post height" = "tmp L post height"
-    MOV ebx, DWORD [r9] ; else, "shorter post height" = "tmp R post height"
-
-    BRAN_01_doNotExchange:
-
-    MUL rbx ; "tmp water" = ("number of posts" - 1) * "shorter post height"
-    MOV QWORD [rsp], rax ; "max water" = "tmp water"
-
-    LOOP_01_forever:
-      MOV ebx, DWORD [r8]
-      CMP ebx, DWORD [r9]
-      JC BRAN_01_moveLeftPost ; if "tmp L post height" < "tmp R post height" then move "tmp L post"
-
-      ; move "tmp R post"
-
-      MOV ebx, DWORD [r13]
-
-      LOOP_01_untilTallerRightPost:
-        CMP r9, r12
-        JZ BRAN_01_calcDone ; if "tmp R post" == "L post" then return "max water"
-
-        SUB r9, 4
+        MOV rax, rdx ; move initial width of posts ("number of posts" - 1)
+        MOV ebx, DWORD [r8]
         CMP ebx, DWORD [r9]
-        JNC LOOP_01_untilTallerRightPost ; if "R post height" >= "tmp R left post height" then move "tmp R post" again
-      ;;; LOOP_01_untilTallerRightPost
+        JC BRAN_01_doNotExchange ; if "tmp L post height" < "tmp R post height" then "shorter post height" = "tmp L post height"
+        MOV ebx, DWORD [r9] ; else, "shorter post height" = "tmp R post height"
 
-      JMP BRAN_01_compareWater ; get "temp water"
+        BRAN_01_doNotExchange:
 
-      ; move "tmp L post"
+        MUL rbx ; "tmp water" = ("number of posts" - 1) * "shorter post height"
+        MOV QWORD [rsp], rax ; "max water" = "tmp water"
 
-      BRAN_01_moveLeftPost:
+        LOOP_01_forever:
+          MOV ebx, DWORD [r8]
+          CMP ebx, DWORD [r9]
+          JC BRAN_01_moveLeftPost ; if "tmp L post height" < "tmp R post height" then move "tmp L post"
 
-      MOV ebx, DWORD [r12]
+          ; move "tmp R post"
 
-      LOOP_01_untilTallerLeftPost:
-        CMP r8, r13
-        JZ BRAN_01_calcDone ; if "tmp L post" == "R post" then return "max water"
+          MOV ebx, DWORD [r13]
 
-        ADD r8, 4
-        CMP ebx, DWORD [r8]
-        JNC LOOP_01_untilTallerLeftPost ; if "L post height" >= "tmp L post height" then move "tmp L post" again
-      ;;; LOOP_01_untilTallerLeftPost
+          LOOP_01_untilTallerRightPost:
+            CMP r9, r12
+            JZ BRAN_01_calcDone ; if "tmp R post" == "L post" then return "max water"
 
-      BRAN_01_compareWater:
+            SUB r9, 4
+            CMP ebx, DWORD [r9]
+            JNC LOOP_01_untilTallerRightPost ; if "R post height" >= "tmp R left post height" then move "tmp R post" again
+          ;;; LOOP_01_untilTallerRightPost
 
-      ; get "tmp water"
+          JMP BRAN_01_compareWater ; get "temp water"
 
-      MOV r12, r8 ; "L post" = "tmp L post"
-      MOV r13, r9 ; "R post" = "tmp R post"
-      MOV ebx, DWORD [r8]
-      CMP ebx, DWORD [r9]
-      JC BRAN_01_doNotExchange2 ; if "tmp L post height" < "tmp R post height" then "shorter post height" = "tmp R post height"
-      MOV ebx, DWORD [r9] ; else, "shorter post height" = "tmp R post height"
+          ; move "tmp L post"
 
-      BRAN_01_doNotExchange2:
+          BRAN_01_moveLeftPost:
 
-      MOV rax, r9
-      SUB rax, r8 ; rax = "tmp R post" - "tmp L post"
-      MUL rbx ; "tmp water" = ("tmp R post" - "tmp L post") * "shorter post height"
-      SHR rax, 2 ; divide "tmp water" by 4 because data is 4 bytes
+          MOV ebx, DWORD [r12]
 
-      ; compare water
+          LOOP_01_untilTallerLeftPost:
+            CMP r8, r13
+            JZ BRAN_01_calcDone ; if "tmp L post" == "R post" then return "max water"
 
-      CMP rax, QWORD [rsp]
-      JC LOOP_01_forever ; if "tmp water" < "max water" then do not modify "max water"
-      MOV QWORD [rsp], rax ; else, "max water" = "tmp water"
-      JMP LOOP_01_forever
-    ;;; LOOP_01_forever
+            ADD r8, 4
+            CMP ebx, DWORD [r8]
+            JNC LOOP_01_untilTallerLeftPost ; if "L post height" >= "tmp L post height" then move "tmp L post" again
+          ;;; LOOP_01_untilTallerLeftPost
 
-    BRAN_01_heightsException:
+          BRAN_01_compareWater:
 
-    MOV QWORD [rsp], 0 ; return 0
+          ; get "tmp water"
 
-    BRAN_01_calcDone:
+          MOV r12, r8 ; "L post" = "tmp L post"
+          MOV r13, r9 ; "R post" = "tmp R post"
+          MOV ebx, DWORD [r8]
+          CMP ebx, DWORD [r9]
+          JC BRAN_01_doNotExchange2 ; if "tmp L post height" < "tmp R post height" then "shorter post height" = "tmp R post height"
+          MOV ebx, DWORD [r9] ; else, "shorter post height" = "tmp R post height"
 
-    POP rax ; return "max water"
-    POP r13
-    POP r12
-    POP rbx
+          BRAN_01_doNotExchange2:
 
-    RET
+          MOV rax, r9
+          SUB rax, r8 ; rax = "tmp R post" - "tmp L post"
+          MUL rbx ; "tmp water" = ("tmp R post" - "tmp L post") * "shorter post height"
+          SHR rax, 2 ; divide "tmp water" by 4 because data is 4 bytes
+
+          ; compare water
+
+          CMP rax, QWORD [rsp]
+          JC LOOP_01_forever ; if "tmp water" < "max water" then do not modify "max water"
+          MOV QWORD [rsp], rax ; else, "max water" = "tmp water"
+          JMP LOOP_01_forever
+        ;;; LOOP_01_forever
+
+        BRAN_01_heightsException:
+
+        MOV QWORD [rsp], 0 ; return 0
+
+        BRAN_01_calcDone:
+
+        POP rax ; return "max water"
+        POP r13
+        POP r12
+        POP rbx
+
+        RET
